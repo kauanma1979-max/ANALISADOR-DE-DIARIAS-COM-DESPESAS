@@ -546,9 +546,6 @@ export default function App() {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-50/50 border-b border-slate-100">
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">ID</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Nome</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Origem</th>
                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Destino</th>
                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Saída</th>
                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Chegada</th>
@@ -560,16 +557,13 @@ export default function App() {
                     <tbody className="divide-y divide-slate-50">
                       {filteredData.map((r, i) => (
                         <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="px-6 py-4 text-sm font-medium text-slate-900">{r.id}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600">{r.nome}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600">{r.origem}</td>
                           <td className="px-6 py-4 text-sm text-slate-600">{r.destino}</td>
                           <td className="px-6 py-4 text-sm text-slate-600 text-nowrap">{r.dataSaida} {r.horaSaida}</td>
                           <td className="px-6 py-4 text-sm text-slate-600 text-nowrap">{r.dataChegada} {r.horaChegada}</td>
                           <td className="px-6 py-4 text-sm text-slate-500 min-w-[300px] whitespace-normal break-words leading-relaxed">
                             {r.motivo}
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 text-sm text-slate-600">
                             <span className={cn(
                               "px-3 py-1 rounded-full text-xs font-bold text-nowrap",
                               r.status === 'Concluído' ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"
@@ -584,7 +578,7 @@ export default function App() {
                       ))}
                       {filteredData.length === 0 && (
                         <tr>
-                          <td colSpan={9} className="px-6 py-20 text-center text-slate-400">
+                          <td colSpan={6} className="px-6 py-20 text-center text-slate-400">
                             Nenhum registro encontrado.
                           </td>
                         </tr>
@@ -715,7 +709,56 @@ export default function App() {
               <div className="space-y-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-800 mb-6">Evolução Mensal</h3>
+                    <h3 className="text-lg font-bold text-slate-800 mb-6">Diárias vs Despesas (Mês Corrente)</h3>
+                    {(() => {
+                      const hoje = new Date();
+                      const curMes = MONTH_ORDER[hoje.getMonth()];
+                      const curAno = hoje.getFullYear();
+                      
+                      const diariosMes = allData.filter(r => r.mes === curMes && r.ano === curAno);
+                      const totalDiarias = diariosMes.reduce((sum, r) => sum + r.totalPago, 0);
+                      
+                      const despesasPorTipo: Record<string, number> = {};
+                      expenses.filter(exp => {
+                        const d = new Date(exp.date);
+                        return MONTH_ORDER[d.getMonth()] === curMes && d.getFullYear() === curAno;
+                      }).forEach(exp => {
+                        despesasPorTipo[exp.type] = (despesasPorTipo[exp.type] || 0) + exp.value;
+                      });
+
+                      const labels = ['Diárias Recebidas', ...Object.keys(despesasPorTipo)];
+                      const dataValues = [totalDiarias, ...Object.values(despesasPorTipo)];
+                      const colors = ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ef4444', '#06b6d4'];
+
+                      return (
+                        <Bar 
+                          options={{ 
+                            responsive: true, 
+                            plugins: { 
+                              legend: { display: false },
+                              tooltip: {
+                                callbacks: {
+                                  label: (context) => formatCurrency(context.raw as number)
+                                }
+                              }
+                            } 
+                          }}
+                          data={{
+                            labels: labels,
+                            datasets: [
+                              { 
+                                data: dataValues, 
+                                backgroundColor: colors.slice(0, dataValues.length),
+                                borderRadius: 8
+                              }
+                            ]
+                          }} 
+                        />
+                      );
+                    })()}
+                  </div>
+                  <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                    <h3 className="text-lg font-bold text-slate-800 mb-6">Evolução Mensal (Receita vs Despesa)</h3>
                     <Line 
                       options={{ responsive: true, plugins: { legend: { position: 'bottom' } } }}
                       data={{
@@ -727,17 +770,25 @@ export default function App() {
                       }} 
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-800 mb-6">Volume de Solicitações</h3>
-                    <Bar 
-                      options={{ responsive: true, plugins: { legend: { display: false } } }}
-                      data={{
-                        labels: chartMonthlyData.map(m => `${m.mes} ${m.ano}`),
-                        datasets: [
-                          { data: chartMonthlyData.map(m => m.solicitacoes), backgroundColor: '#3b82f6', borderRadius: 8 }
-                        ]
-                      }} 
-                    />
+                    <h3 className="text-lg font-bold text-slate-800 mb-6">Volume de Solicitações (Últimos 12 Meses)</h3>
+                    {(() => {
+                      const last12Months = chartMonthlyData.slice(-12);
+                      return (
+                        <Bar 
+                          options={{ responsive: true, plugins: { legend: { display: false } } }}
+                          data={{
+                            labels: last12Months.map(m => `${m.mes} ${m.ano}`),
+                            datasets: [
+                              { data: last12Months.map(m => m.solicitacoes), backgroundColor: '#3b82f6', borderRadius: 8 }
+                            ]
+                          }} 
+                        />
+                      );
+                    })()}
                   </div>
                 </div>
 
