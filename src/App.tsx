@@ -507,10 +507,10 @@ export default function App() {
               className={cn("p-6 rounded-3xl shadow-sm text-white flex flex-col justify-between h-32 bg-gradient-to-br", kpi.color)}
             >
               <div className="flex justify-between items-start">
-                <p className="text-sm font-medium text-white/80">{kpi.label}</p>
-                <kpi.icon className="w-5 h-5 text-white/30" />
+                <p className="text-base font-bold text-white tracking-wide">{kpi.label}</p>
+                <kpi.icon className="w-6 h-6 text-white/40" />
               </div>
-              <p className="text-2xl font-bold">{kpi.value}</p>
+              <p className="text-3xl font-black tracking-tight">{kpi.value}</p>
             </motion.div>
           ))}
         </section>
@@ -552,43 +552,45 @@ export default function App() {
           >
             {activeTab === 'dados' && (
               <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="w-full">
-                  <table className="w-full text-left border-collapse table-auto">
+                <div className="w-full overflow-x-hidden">
+                  <table className="w-full text-left border-collapse table-fixed">
                     <thead>
                       <tr className="bg-slate-50/50 border-b border-slate-100">
-                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase">Destino</th>
-                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase">Saída Origem</th>
-                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase">Chegada Origem</th>
-                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase">Saída Destino</th>
-                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase">Chegada Destino</th>
-                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase">Motivo</th>
-                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase">Status</th>
-                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase text-right">Total Pago</th>
+                        <th className="px-3 py-4 text-xs font-bold text-slate-500 uppercase w-[15%]">Destino</th>
+                        <th className="px-3 py-4 text-xs font-bold text-slate-500 uppercase w-[13%]">Saída/Chegada Or.</th>
+                        <th className="px-3 py-4 text-xs font-bold text-slate-500 uppercase w-[13%]">Saída/Chegada Dest.</th>
+                        <th className="px-3 py-4 text-xs font-bold text-slate-500 uppercase w-[35%]">Motivo</th>
+                        <th className="px-3 py-4 text-xs font-bold text-slate-500 uppercase w-[12%]">Status</th>
+                        <th className="px-3 py-4 text-xs font-bold text-slate-500 uppercase text-right w-[12%]">Valor</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
                       {filteredData.map((r, i) => (
                         <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="px-3 py-3 text-[11px] text-slate-600 font-medium">{r.destino}</td>
-                          <td className="px-3 py-3 text-[10px] text-slate-500 whitespace-nowrap">{r.saidaOrigem}</td>
-                          <td className="px-3 py-3 text-[10px] text-slate-500 whitespace-nowrap">{r.chegadaOrigem}</td>
-                          <td className="px-3 py-3 text-[10px] text-slate-500 whitespace-nowrap">{r.saidaDestino}</td>
-                          <td className="px-3 py-3 text-[10px] text-slate-500 whitespace-nowrap">{r.chegadaDestino}</td>
-                          <td className="px-3 py-3 text-[11px] text-slate-600 leading-tight">
-                            <div className="max-w-[200px] break-words">
+                          <td className="px-3 py-4 text-xs text-slate-700 font-semibold align-top">{r.destino}</td>
+                          <td className="px-3 py-4 text-[11px] text-slate-500 leading-tight align-top">
+                            <div className="font-bold text-slate-600">S: {r.saidaOrigem}</div>
+                            <div className="mt-1">C: {r.chegadaOrigem}</div>
+                          </td>
+                          <td className="px-3 py-4 text-[11px] text-slate-500 leading-tight align-top">
+                            <div className="font-bold text-slate-600">S: {r.saidaDestino}</div>
+                            <div className="mt-1">C: {r.chegadaDestino}</div>
+                          </td>
+                          <td className="px-3 py-4 text-xs text-slate-600 leading-relaxed align-top">
+                            <div className="line-clamp-6" title={r.motivo}>
                               {r.motivo}
                             </div>
                           </td>
-                          <td className="px-3 py-3">
+                          <td className="px-3 py-4 align-top">
                             <span className={cn(
-                              "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter whitespace-nowrap",
+                              "px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter block text-center",
                               r.status === 'Concluído' ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-slate-100 text-slate-600 border border-slate-200"
                             )}>
                               {r.status}
                             </span>
                           </td>
-                          <td className="px-3 py-3 text-[11px] font-bold text-slate-900 text-right whitespace-nowrap">
-                            {formatCurrency(r.totalPago)}
+                          <td className="px-3 py-4 text-sm font-bold text-slate-900 text-right align-top">
+                            <div className="whitespace-nowrap">{formatCurrency(r.totalPago)}</div>
                           </td>
                         </tr>
                       ))}
@@ -725,19 +727,29 @@ export default function App() {
               <div className="space-y-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-800 mb-6">Diárias vs Despesas (Mês Corrente)</h3>
+                    <h3 className="text-lg font-bold text-slate-800 mb-6">
+                      Diárias vs Despesas ({mesFilter === 'all' ? 'Geral' : MESES_NUMERO[mesFilter]} {anoFilter === 'all' ? '' : anoFilter})
+                    </h3>
                     {(() => {
-                      const hoje = new Date();
-                      const curMes = MONTH_ORDER[hoje.getMonth()];
-                      const curAno = hoje.getFullYear();
+                      const targetMes = mesFilter;
+                      const targetAno = anoFilter !== 'all' ? parseInt(anoFilter) : null;
                       
-                      const diariosMes = allData.filter(r => r.mes === curMes && r.ano === curAno);
-                      const totalDiarias = diariosMes.reduce((sum, r) => sum + r.totalPago, 0);
+                      const filteredDiarios = allData.filter(r => {
+                        const mMatch = targetMes === 'all' || r.mes === targetMes;
+                        const aMatch = targetAno === null || r.ano === targetAno;
+                        return mMatch && aMatch;
+                      });
+
+                      const totalDiarias = filteredDiarios.reduce((sum, r) => sum + r.totalPago, 0);
                       
                       const despesasPorTipo: Record<string, number> = {};
                       expenses.filter(exp => {
                         const d = new Date(exp.date);
-                        return MONTH_ORDER[d.getMonth()] === curMes && d.getFullYear() === curAno;
+                        const expMes = MONTH_ORDER[d.getMonth()];
+                        const expAno = d.getFullYear();
+                        const mMatch = targetMes === 'all' || expMes === targetMes;
+                        const aMatch = targetAno === null || expAno === targetAno;
+                        return mMatch && aMatch;
                       }).forEach(exp => {
                         despesasPorTipo[exp.type] = (despesasPorTipo[exp.type] || 0) + exp.value;
                       });
