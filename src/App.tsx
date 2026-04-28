@@ -137,6 +137,12 @@ export default function App() {
             ano = parseInt(row['Ano'] || row['Ano.1'] || 0) || 0;
           }
 
+          // Local normalize status "ConUG" or similar to "Concluído"
+          let status = row['Status'] || 'Concluído';
+          if (status.toString().toUpperCase().startsWith('CON')) {
+            status = 'Concluído';
+          }
+
           return {
             id: row['Id'] || (idx + 1),
             cpf: row['CPF'] || '',
@@ -151,7 +157,7 @@ export default function App() {
             saidaDestino: sd.data ? `${sd.data} ${sd.hora}` : '',
             chegadaDestino: cd.data ? `${cd.data} ${cd.hora}` : '',
             motivo: row['Motivo'] || '',
-            status: row['Status'] || 'Concluído',
+            status: status,
             totalPago: parseFloat(row['Total Pago'] || 0) || 0
           };
         }).filter(r => r.ano > 0 && r.totalPago >= 0);
@@ -546,40 +552,42 @@ export default function App() {
           >
             {activeTab === 'dados' && (
               <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+                <div className="w-full">
+                  <table className="w-full text-left border-collapse table-auto">
                     <thead>
                       <tr className="bg-slate-50/50 border-b border-slate-100">
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Destino</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Saída Origem</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Chegada Origem</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Saída Destino</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Chegada Destino</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Motivo</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Status</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right text-nowrap">Total Pago</th>
+                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase">Destino</th>
+                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase">Saída Origem</th>
+                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase">Chegada Origem</th>
+                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase">Saída Destino</th>
+                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase">Chegada Destino</th>
+                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase">Motivo</th>
+                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase">Status</th>
+                        <th className="px-3 py-4 text-[10px] font-bold text-slate-500 uppercase text-right">Total Pago</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
                       {filteredData.map((r, i) => (
                         <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="px-6 py-4 text-sm text-slate-600">{r.destino}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600 text-nowrap">{r.saidaOrigem}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600 text-nowrap">{r.chegadaOrigem}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600 text-nowrap">{r.saidaDestino}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600 text-nowrap">{r.chegadaDestino}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500 min-w-[300px] whitespace-normal break-words leading-relaxed">
-                            {r.motivo}
+                          <td className="px-3 py-3 text-[11px] text-slate-600 font-medium">{r.destino}</td>
+                          <td className="px-3 py-3 text-[10px] text-slate-500 whitespace-nowrap">{r.saidaOrigem}</td>
+                          <td className="px-3 py-3 text-[10px] text-slate-500 whitespace-nowrap">{r.chegadaOrigem}</td>
+                          <td className="px-3 py-3 text-[10px] text-slate-500 whitespace-nowrap">{r.saidaDestino}</td>
+                          <td className="px-3 py-3 text-[10px] text-slate-500 whitespace-nowrap">{r.chegadaDestino}</td>
+                          <td className="px-3 py-3 text-[11px] text-slate-600 leading-tight">
+                            <div className="max-w-[200px] break-words">
+                              {r.motivo}
+                            </div>
                           </td>
-                          <td className="px-6 py-4 text-sm text-slate-600">
+                          <td className="px-3 py-3">
                             <span className={cn(
-                              "px-3 py-1 rounded-full text-xs font-bold text-nowrap",
-                              r.status === 'Concluído' ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"
+                              "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter whitespace-nowrap",
+                              r.status === 'Concluído' ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-slate-100 text-slate-600 border border-slate-200"
                             )}>
                               {r.status}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-sm font-bold text-slate-900 text-right text-nowrap">
+                          <td className="px-3 py-3 text-[11px] font-bold text-slate-900 text-right whitespace-nowrap">
                             {formatCurrency(r.totalPago)}
                           </td>
                         </tr>
