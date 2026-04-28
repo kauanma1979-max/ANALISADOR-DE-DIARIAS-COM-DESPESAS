@@ -113,14 +113,18 @@ export default function App() {
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
         const processedData = (jsonData as any[]).map((row, idx) => {
-          const saida = parseDateTime(row['Saída Origem'] || row['Saída Destino'] || '');
-          const chegada = parseDateTime(row['Chegada Origem'] || row['Chegada Destino'] || '');
+          const so = parseDateTime(row['Saída Origem'] || '');
+          const co = parseDateTime(row['Chegada Origem'] || '');
+          const sd = parseDateTime(row['Saída Destino'] || '');
+          const cd = parseDateTime(row['Chegada Destino'] || '');
           
           let mes = '';
           let ano = 0;
 
-          if (saida.data) {
-            const dataParts = saida.data.split('/');
+          const primarySaida = so.data ? so : (sd.data ? sd : { data: '', hora: '' });
+
+          if (primarySaida.data) {
+            const dataParts = primarySaida.data.split('/');
             if (dataParts.length === 3) {
               const mesNum = parseInt(dataParts[1]);
               const meses = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -142,10 +146,10 @@ export default function App() {
             ano,
             origem: row['Origem'] || '',
             destino: row['Destino'] || '',
-            dataSaida: saida.data,
-            horaSaida: saida.hora,
-            dataChegada: chegada.data,
-            horaChegada: chegada.hora,
+            saidaOrigem: so.data ? `${so.data} ${so.hora}` : '',
+            chegadaOrigem: co.data ? `${co.data} ${co.hora}` : '',
+            saidaDestino: sd.data ? `${sd.data} ${sd.hora}` : '',
+            chegadaDestino: cd.data ? `${cd.data} ${cd.hora}` : '',
             motivo: row['Motivo'] || '',
             status: row['Status'] || 'Concluído',
             totalPago: parseFloat(row['Total Pago'] || 0) || 0
@@ -547,8 +551,10 @@ export default function App() {
                     <thead>
                       <tr className="bg-slate-50/50 border-b border-slate-100">
                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Destino</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Saída</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Chegada</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Saída Origem</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Chegada Origem</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Saída Destino</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Chegada Destino</th>
                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Motivo</th>
                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Status</th>
                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right text-nowrap">Total Pago</th>
@@ -558,8 +564,10 @@ export default function App() {
                       {filteredData.map((r, i) => (
                         <tr key={i} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-6 py-4 text-sm text-slate-600">{r.destino}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600 text-nowrap">{r.dataSaida} {r.horaSaida}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600 text-nowrap">{r.dataChegada} {r.horaChegada}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600 text-nowrap">{r.saidaOrigem}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600 text-nowrap">{r.chegadaOrigem}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600 text-nowrap">{r.saidaDestino}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600 text-nowrap">{r.chegadaDestino}</td>
                           <td className="px-6 py-4 text-sm text-slate-500 min-w-[300px] whitespace-normal break-words leading-relaxed">
                             {r.motivo}
                           </td>
@@ -578,7 +586,7 @@ export default function App() {
                       ))}
                       {filteredData.length === 0 && (
                         <tr>
-                          <td colSpan={6} className="px-6 py-20 text-center text-slate-400">
+                          <td colSpan={8} className="px-6 py-20 text-center text-slate-400">
                             Nenhum registro encontrado.
                           </td>
                         </tr>

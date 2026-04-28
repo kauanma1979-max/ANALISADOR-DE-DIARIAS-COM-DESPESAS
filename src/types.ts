@@ -7,10 +7,10 @@ export interface DiariaRecord {
   ano: number;
   origem: string;
   destino: string;
-  dataSaida: string;
-  horaSaida: string;
-  dataChegada: string;
-  horaChegada: string;
+  saidaOrigem: string;
+  chegadaOrigem: string;
+  saidaDestino: string;
+  chegadaDestino: string;
   motivo: string;
   status: string;
   totalPago: number;
