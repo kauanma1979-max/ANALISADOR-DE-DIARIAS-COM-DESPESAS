@@ -546,39 +546,45 @@ export default function App() {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-50/50 border-b border-slate-100">
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">ID</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Origem</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Destino</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Saída</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Motivo</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Status</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right">Total Pago</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">ID</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Nome</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Origem</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Destino</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Saída</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Chegada</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Motivo</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-nowrap">Status</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right text-nowrap">Total Pago</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
                       {filteredData.map((r, i) => (
                         <tr key={i} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-6 py-4 text-sm font-medium text-slate-900">{r.id}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600">{r.nome}</td>
                           <td className="px-6 py-4 text-sm text-slate-600">{r.origem}</td>
                           <td className="px-6 py-4 text-sm text-slate-600">{r.destino}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600">{r.dataSaida} {r.horaSaida}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500 max-w-xs truncate" title={r.motivo}>{r.motivo}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600 text-nowrap">{r.dataSaida} {r.horaSaida}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600 text-nowrap">{r.dataChegada} {r.horaChegada}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 min-w-[300px] whitespace-normal break-words leading-relaxed">
+                            {r.motivo}
+                          </td>
                           <td className="px-6 py-4">
                             <span className={cn(
-                              "px-3 py-1 rounded-full text-xs font-bold",
+                              "px-3 py-1 rounded-full text-xs font-bold text-nowrap",
                               r.status === 'Concluído' ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"
                             )}>
                               {r.status}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-sm font-bold text-slate-900 text-right">
+                          <td className="px-6 py-4 text-sm font-bold text-slate-900 text-right text-nowrap">
                             {formatCurrency(r.totalPago)}
                           </td>
                         </tr>
                       ))}
                       {filteredData.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="px-6 py-20 text-center text-slate-400">
+                          <td colSpan={9} className="px-6 py-20 text-center text-slate-400">
                             Nenhum registro encontrado.
                           </td>
                         </tr>
