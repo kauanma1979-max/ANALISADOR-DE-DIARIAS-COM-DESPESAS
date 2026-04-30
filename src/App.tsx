@@ -226,6 +226,7 @@ export default function App() {
 
   const totalPago = useMemo(() => filteredData.reduce((sum, r) => sum + r.totalPago, 0), [filteredData]);
   const totalDespesas = useMemo(() => filteredExpenses.reduce((sum, exp) => sum + exp.value, 0), [filteredExpenses]);
+  const totalPernoites = useMemo(() => filteredData.filter(r => r.totalPago > 200).length, [filteredData]);
   const valorLiquido = totalPago - totalDespesas;
 
   const addExpense = () => {
@@ -496,7 +497,13 @@ export default function App() {
         {/* KPI Cards */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {[
-            { label: 'Total de Diárias', value: filteredData.length, color: 'from-blue-600 to-blue-700', icon: TableIcon },
+            { 
+              label: 'Total de Diárias', 
+              value: filteredData.length, 
+              subValue: `${totalPernoites} pernoite${totalPernoites !== 1 ? 's' : ''}`,
+              color: 'from-blue-600 to-blue-700', 
+              icon: TableIcon 
+            },
             { label: 'Total Recebido', value: formatCurrency(totalPago), color: 'from-emerald-500 to-emerald-600', icon: Coins },
             { label: 'Total Despesas', value: formatCurrency(totalDespesas), color: 'from-rose-500 to-rose-600', icon: Trash2 },
             { label: 'Valor Líquido', value: formatCurrency(valorLiquido), color: 'from-violet-600 to-violet-700', icon: BarChart3 },
@@ -510,7 +517,14 @@ export default function App() {
                 <p className="text-base font-bold text-white tracking-wide">{kpi.label}</p>
                 <kpi.icon className="w-6 h-6 text-white/40" />
               </div>
-              <p className="text-3xl font-black tracking-tight">{kpi.value}</p>
+              <div className="flex items-baseline justify-between">
+                <p className="text-3xl font-black tracking-tight">{kpi.value}</p>
+                {('subValue' in kpi) && (
+                  <p className="text-xl font-bold tracking-tight text-black">
+                    {kpi.subValue}
+                  </p>
+                )}
+              </div>
             </motion.div>
           ))}
         </section>
