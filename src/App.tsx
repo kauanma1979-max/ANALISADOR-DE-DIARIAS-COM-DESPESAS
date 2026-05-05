@@ -33,7 +33,10 @@ import {
   Calendar,
   Layers,
   Save,
-  FolderOpen
+  FolderOpen,
+  ExternalLink,
+  MessageCircle,
+  Edit2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from './lib/utils';
@@ -65,6 +68,13 @@ export default function App() {
   const [expenseValue, setExpenseValue] = useState('');
   const [expenseType, setExpenseType] = useState('');
   const [expenseDescription, setExpenseDescription] = useState('');
+  const [expenseCity, setExpenseCity] = useState('');
+  const [expenseLink, setExpenseLink] = useState('');
+  const [expenseWhatsapp, setExpenseWhatsapp] = useState('');
+  const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
+
+  const [cityFilterExpenses, setCityFilterExpenses] = useState('all');
+  const [showOnlyAccommodation, setShowOnlyAccommodation] = useState(false);
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingRestoreData, setPendingRestoreData] = useState<Expense[] | null>(null);
@@ -195,11 +205,28 @@ export default function App() {
     });
   }, [allData, mesFilter, anoFilter, searchFilter]);
 
+  const formatDateSafe = (dateStr: string) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const [year, month, day] = parts;
+    return `${day}/${month}/${year}`;
+  };
+
+  const getMonthAndYearFromDate = (dateStr: string) => {
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return { mes: '', ano: 0 };
+    const [year, month] = parts.map(Number);
+    return {
+      mes: MONTH_ORDER[month - 1],
+      ano: year
+    };
+  };
+
   const uniqueMeses = useMemo(() => {
     const mesesDiarias = [...new Set(allData.map(r => r.mes).filter(m => m))];
     const mesesDespesas = [...new Set(expenses.map(exp => {
-      const expDate = new Date(exp.date);
-      return MONTH_ORDER[expDate.getMonth()];
+      return getMonthAndYearFromDate(exp.date).mes;
     }).filter(m => m))];
     const todos = [...new Set([...mesesDiarias, ...mesesDespesas])];
     return todos.sort((a, b) => MONTH_ORDER.indexOf(a) - MONTH_ORDER.indexOf(b));
@@ -207,45 +234,97 @@ export default function App() {
 
   const uniqueAnos = useMemo(() => {
     const anosData = [...new Set(allData.map(r => r.ano).filter(a => a))];
-    const anosDespesas = [...new Set(expenses.map(exp => new Date(exp.date).getFullYear()).filter(a => a))];
+    const anosDespesas = [...new Set(expenses.map(exp => getMonthAndYearFromDate(exp.date).ano).filter(a => a))];
     const todos = [...new Set([...anosData, ...anosDespesas])];
     return todos.sort((a, b) => a - b);
   }, [allData, expenses]);
 
+  const uniqueCitiesExpenses = useMemo(() => {
+    return [...new Set(expenses.map(exp => exp.city).filter(c => c))].sort();
+  }, [expenses]);
+
   const filteredExpenses = useMemo(() => {
     return expenses.filter(exp => {
-      const expDate = new Date(exp.date);
-      const expMes = MONTH_ORDER[expDate.getMonth()];
-      const expAno = expDate.getFullYear();
+      const { mes: expMes, ano: expAno } = getMonthAndYearFromDate(exp.date);
       
       const mesMatch = mesFilter === 'all' || expMes === mesFilter;
       const anoMatch = anoFilter === 'all' || expAno === parseInt(anoFilter);
-      return mesMatch && anoMatch;
+      const cityMatch = cityFilterExpenses === 'all' || exp.city === cityFilterExpenses;
+      const typeMatch = !showOnlyAccommodation || exp.type.includes('Hospedagem');
+      return mesMatch && anoMatch && cityMatch && typeMatch;
     });
-  }, [expenses, mesFilter, anoFilter]);
+  }, [expenses, mesFilter, anoFilter, cityFilterExpenses, showOnlyAccommodation]);
 
   const totalPago = useMemo(() => filteredData.reduce((sum, r) => sum + r.totalPago, 0), [filteredData]);
   const totalDespesas = useMemo(() => filteredExpenses.reduce((sum, exp) => sum + exp.value, 0), [filteredExpenses]);
   const totalPernoites = useMemo(() => filteredData.filter(r => r.totalPago > 200).length, [filteredData]);
   const valorLiquido = totalPago - totalDespesas;
 
-  const addExpense = () => {
+  const saveExpense = () => {
     if (!expenseDate || !expenseValue || !expenseType) {
       alert('Preencha os campos obrigatórios');
       return;
     }
-    const newExpense: Expense = {
-      id: Date.now(),
-      date: expenseDate,
-      value: parseFloat(expenseValue),
-      type: expenseType,
-      description: expenseDescription
-    };
-    setExpenses([...expenses, newExpense]);
+    const processedLink = expenseLink && !expenseLink.startsWith('http') ? `https://${expenseLink}` : expenseLink;
+
+    if (editingExpenseId) {
+      setExpenses(expenses.map(e => e.id === editingExpenseId ? {
+        ...e,
+        date: expenseDate,
+        value: parseFloat(expenseValue),
+        type: expenseType,
+        description: expenseDescription,
+        city: expenseCity,
+        link: processedLink,
+        whatsapp: expenseWhatsapp
+      } : e));
+      setEditingExpenseId(null);
+    } else {
+      const newExpense: Expense = {
+        id: Date.now(),
+        date: expenseDate,
+        value: parseFloat(expenseValue),
+        type: expenseType,
+        description: expenseDescription,
+        city: expenseCity,
+        link: processedLink,
+        whatsapp: expenseWhatsapp
+      };
+      setExpenses([...expenses, newExpense]);
+    }
+
     setExpenseDate('');
     setExpenseValue('');
     setExpenseType('');
     setExpenseDescription('');
+    setExpenseCity('');
+    setExpenseLink('');
+    setExpenseWhatsapp('');
+  };
+
+  const editExpense = (exp: Expense) => {
+    setEditingExpenseId(exp.id);
+    setExpenseDate(exp.date);
+    setExpenseValue(exp.value.toString());
+    setExpenseType(exp.type);
+    setExpenseDescription(exp.description);
+    setExpenseCity(exp.city || '');
+    setExpenseLink(exp.link || '');
+    setExpenseWhatsapp(exp.whatsapp || '');
+    
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditingExpenseId(null);
+    setExpenseDate('');
+    setExpenseValue('');
+    setExpenseType('');
+    setExpenseDescription('');
+    setExpenseCity('');
+    setExpenseLink('');
+    setExpenseWhatsapp('');
   };
 
   const deleteExpense = (id: number) => {
@@ -320,16 +399,17 @@ export default function App() {
     });
 
     const entries = Object.entries(grouped).map(([key, val]) => {
-      const [ano, mes] = key.split('-');
+      const [anoStr, mes] = key.split('-');
+      const ano = parseInt(anoStr);
       const despesas = expenses.filter(exp => {
-        const d = new Date(exp.date);
-        return MONTH_ORDER[d.getMonth()] === mes && d.getFullYear() === parseInt(ano);
+        const { mes: eMes, ano: eAno } = getMonthAndYearFromDate(exp.date);
+        return eMes === mes && eAno === ano;
       }).reduce((sum, e) => sum + e.value, 0);
 
       return {
         key,
         mes,
-        ano: parseInt(ano),
+        ano,
         pago: val.pago,
         solicitacoes: val.solicitacoes,
         despesas,
@@ -626,7 +706,12 @@ export default function App() {
                 <div className="lg:col-span-1 space-y-6">
                   <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
                     <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                       <Plus className="w-5 h-5 text-blue-500" /> Registrar Despesa
+                       {editingExpenseId ? (
+                         <Edit2 className="w-5 h-5 text-amber-500" />
+                       ) : (
+                         <Plus className="w-5 h-5 text-blue-500" />
+                       )}
+                       {editingExpenseId ? 'Editar Despesa' : 'Registrar Despesa'}
                     </h3>
                     <div className="space-y-4">
                       <div>
@@ -674,12 +759,55 @@ export default function App() {
                           className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all"
                         />
                       </div>
-                      <button 
-                        onClick={addExpense}
-                        className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors mt-4"
-                      >
-                        Adicionar
-                      </button>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Cidade</label>
+                        <input 
+                          type="text" 
+                          placeholder="Ex: São Paulo"
+                          value={expenseCity}
+                          onChange={e => setExpenseCity(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Link (Site/Local)</label>
+                        <input 
+                          type="url" 
+                          placeholder="https://..."
+                          value={expenseLink}
+                          onChange={e => setExpenseLink(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">WhatsApp</label>
+                        <input 
+                          type="text" 
+                          placeholder="(11) 99999-9999"
+                          value={expenseWhatsapp}
+                          onChange={e => setExpenseWhatsapp(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2 mt-4">
+                        <button 
+                          onClick={saveExpense}
+                          className={cn(
+                            "w-full py-3 text-white rounded-xl font-bold transition-colors",
+                            editingExpenseId ? "bg-amber-500 hover:bg-amber-600" : "bg-blue-600 hover:bg-blue-700"
+                          )}
+                        >
+                          {editingExpenseId ? 'Salvar Alterações' : 'Adicionar'}
+                        </button>
+                        {editingExpenseId && (
+                          <button 
+                            onClick={cancelEdit}
+                            className="w-full py-2 text-slate-500 font-bold hover:text-slate-700 transition-colors text-sm"
+                          >
+                            Cancelar Edição
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -702,33 +830,101 @@ export default function App() {
                 </div>
 
                 <div className="lg:col-span-2 space-y-4">
-                  {expenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((exp) => (
+                  <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-3xl border border-slate-200 shadow-sm gap-4">
+                    <div className="flex items-center gap-4">
+                      <p className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                         <Search className="w-4 h-4" /> Filtrar
+                      </p>
+                      <select 
+                        value={cityFilterExpenses}
+                        onChange={(e) => setCityFilterExpenses(e.target.value)}
+                        className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 outline-none text-sm focus:ring-2 focus:ring-blue-500 transition-all min-w-[150px]"
+                      >
+                        <option value="all">Todas as cidades</option>
+                        {uniqueCitiesExpenses.map(city => (
+                          <option key={city} value={city}>{city}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={showOnlyAccommodation}
+                        onChange={e => setShowOnlyAccommodation(e.target.checked)}
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-xs font-bold text-slate-600">Apenas Hotéis/Airbnb</span>
+                    </label>
+                  </div>
+
+                  {filteredExpenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((exp) => (
                     <motion.div 
                       layout
                       key={exp.id} 
-                      className="bg-white p-5 rounded-2xl border border-slate-200 flex justify-between items-center hover:shadow-md transition-shadow group"
+                      className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:shadow-md transition-shadow group gap-4"
                     >
-                      <div className="flex gap-4 items-center">
-                        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+                      <div className="flex gap-4 items-start">
+                        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
                           <Coins className="text-blue-600 w-6 h-6" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-800">{exp.type}</p>
-                          <p className="text-xs text-slate-400">{new Date(exp.date).toLocaleDateString('pt-BR')} • {exp.description || 'Sem descrição'}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-bold text-slate-800">{exp.type}</p>
+                            {exp.city && (
+                              <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full uppercase tracking-tight">
+                                {exp.city}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-400 font-medium my-1">
+                            {formatDateSafe(exp.date)} • {exp.description || 'Sem descrição'}
+                          </p>
+                          <div className="flex items-center gap-3 mt-2">
+                            {exp.link && (
+                              <a 
+                                href={exp.link} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                              >
+                                <ExternalLink className="w-3 h-3" /> Ver Link
+                              </a>
+                            )}
+                            {exp.whatsapp && (
+                              <a 
+                                href={`https://wa.me/${exp.whatsapp.replace(/\D/g, '')}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
+                              >
+                                <MessageCircle className="w-3 h-3" /> WhatsApp
+                              </a>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
                         <p className="text-lg font-bold text-rose-600">{formatCurrency(exp.value)}</p>
-                        <button 
-                          onClick={() => deleteExpense(exp.id)}
-                          className="p-2 text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button 
+                            onClick={() => editExpense(exp)}
+                            className="p-2 text-slate-300 hover:text-blue-500 transition-colors sm:opacity-0 group-hover:opacity-100"
+                            title="Editar"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => deleteExpense(exp.id)}
+                            className="p-2 text-slate-300 hover:text-rose-500 transition-colors sm:opacity-0 group-hover:opacity-100"
+                            title="Excluir"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </motion.div>
                   ))}
-                  {expenses.length === 0 && (
+                  {filteredExpenses.length === 0 && (
                     <div className="bg-white p-20 rounded-3xl border border-slate-200 text-center text-slate-400">
                       Nenhuma despesa registrada.
                     </div>
@@ -758,9 +954,7 @@ export default function App() {
                       
                       const despesasPorTipo: Record<string, number> = {};
                       expenses.filter(exp => {
-                        const d = new Date(exp.date);
-                        const expMes = MONTH_ORDER[d.getMonth()];
-                        const expAno = d.getFullYear();
+                        const { mes: expMes, ano: expAno } = getMonthAndYearFromDate(exp.date);
                         const mMatch = targetMes === 'all' || expMes === targetMes;
                         const aMatch = targetAno === null || expAno === targetAno;
                         return mMatch && aMatch;

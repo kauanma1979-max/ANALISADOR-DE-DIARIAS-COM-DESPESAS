@@ -22,6 +22,9 @@ export interface Expense {
   value: number;
   type: string;
   description: string;
+  city?: string;
+  link?: string;
+  whatsapp?: string;
 }
 
 export type TabType = 'dados' | 'despesas' | 'analise' | 'anual' | 'status';
